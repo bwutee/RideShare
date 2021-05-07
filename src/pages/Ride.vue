@@ -1,10 +1,33 @@
 <template>
-  <v-container>
-    <div>
-      <h4 class="display-1">Rides</h4>
-    </div>
-  </v-container>
+<div>
+<v-form>
+  <v-select 
+  v-model="select"
+  :hint="`${select.value}, ${select.text}`"
+  placeholder="select from location"
+  :items="locations"
+  persistent-hint
+  outlined
+  > 
+  </v-select>
+
+  <v-select 
+  v-model="select"
+  :hint="`${select.value}, ${select.text}`"
+  placeholder="select destination"
+  :items="locations"
+  persistent-hint
+  outlined
+  > 
+  </v-select>
+</v-form>
+
+<p>
+{{locations}}
+</p>
+</div>
 </template>
+
 
 <script>
 export default {
@@ -12,15 +35,16 @@ export default {
 
   data: function() {
     return {
-      locations: [{text: 'Select One', value: null}]
+      select:{name:'White House', address:'600 Pennsylvania Avenue NW'},
+      locations:{name: 'item name', address: 'item address'}
     };
   },
 
   mounted: function() {
     this.$axios.get("/locations").then(response => {
       this.locations = response.data.map(location => ({
-        value: location.name,
-        text: location.address
+        value: location.address,
+        text: location.name
       }));
     });
   },
@@ -31,7 +55,5 @@ export default {
 </script>
 
 <style>
-.currentAccount {
-  background: lightcoral;
-}
+
 </style>
