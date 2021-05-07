@@ -2,11 +2,6 @@
   <v-container>
     <div>
       <h4 class="display-1">Rides</h4>
-    
-        
-          <b-form-select :options="locations"></b-form-select>
-          <b-form-select :options="locations"></b-form-select>
-
     </div>
   </v-container>
 </template>
