@@ -225,7 +225,15 @@ async function init() {
         description: "Retrieve specific driver by Id",
       },
       handler: (request, h) => {
-        return Driver.query().where("userId",request.params.id)
+        const driver = Driver.query().where("userId",request.params.id);
+        if(!driver){
+          return {
+            ok: false,
+            msge: "driver not found"
+          }
+        }else{
+          return driver;
+        }
       }
     },
     {

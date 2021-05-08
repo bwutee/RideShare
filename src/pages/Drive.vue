@@ -6,6 +6,7 @@
     <div v-if="isLoggedIn">
       <h2>Start Drive!</h2>
       <p> {{this.$store.state.currentAccount}}</p>
+      <p v-if="isDriver">  </p>
     </div>
   </v-container>
 </template>
@@ -25,8 +26,9 @@ export default {
   },
 
   mounted: function() {
-    this.$axios.get(`/drivers/$store.state.currentAccount.id`).then(response => {
+    this.$axios.get(`/drivers/${this.$store.state.currentAccount.id}`).then(response => {
         if (response.data.ok) {
+            //isDriver = true;
             return;
         }
     })
