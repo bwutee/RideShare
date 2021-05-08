@@ -126,7 +126,7 @@ async function init() {
           .where("email", request.payload.email)
           .select("id");
         if(accountId){
-          const newDriver = await Driver.query().insert({
+          const newDriver = await accountId.$relatedQuery().insert({
             userId: accountId,
             licenseNumber: request.payload.licenseNumber,
             licenseState: request.payload.licenseState,
@@ -208,7 +208,26 @@ async function init() {
         }
       },
     },
-
+    {
+      method: "GET",
+      path: "/drivers",
+      config: {
+        description: "Retrieve all drivers",
+      },
+      handler: (request, h) => {
+        return Driver.query();
+      }
+    },
+    {
+      method: "GET",
+      path: "/drivers/{id}",
+      config: {
+        description: "Retrieve specific driver by Id",
+      },
+      handler: (request, h) => {
+        return Driver.query().where("userId",request.params.id)
+      }
+    },
     {
       method: "GET",
       path: "/accounts",
