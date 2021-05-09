@@ -4,9 +4,50 @@
       <h2>Login to Get Started!</h2>
     </div>
     <div v-if="isLoggedIn">
-      <h2>Start Drive!</h2>
-      <p> {{this.$store.state.currentAccount}}</p>
-      <p v-if="isDriver">  </p>
+      <h2>Drive Anywhere</h2>
+      <!--<p> {{this.$store.state.currentAccount}}</p>-->
+      <div v-if="drivers.length > 0"> Hi, Driver! {{drivers}}</div>
+
+      <div v-else-if="drivers.length === 0">
+         Oops! you are not a driver yet. Sign up to get started!
+         <v-form v-model="valid">
+          <v-text-field
+            v-model="newDriver.licenseNumber"
+            v-bind:rules="rules.licenseNumber"
+            label="license number"
+          ></v-text-field>
+          <v-text-field
+            v-model="newDriver.licenseState"
+            v-bind:rules="rules.licenseState"
+            label="license state"
+          ></v-text-field>
+          <v-btn v-bind:disabled="!valid" v-on:click="handleSubmit"
+            >Sign Up
+          </v-btn>
+         </v-form>
+
+        <div class="text-xs-center">
+        <v-dialog v-model="dialogVisible" width="500">
+          <v-card>
+            <v-card-title primary-title>
+              {{ dialogHeader }}
+            </v-card-title>
+
+            <v-card-text>
+              {{ dialogText }}
+            </v-card-text>
+
+            <v-divider></v-divider>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="primary" text v-on:click="hideDialog">Okay</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </div>
+      </div>
+
     </div>
   </v-container>
 </template>
@@ -16,7 +57,24 @@ export default {
 
   data: function() {
     return {
+      drivers : [],
+      valid: false,
+
+      newDriver: {
+        licenseNumber: "",
+        licenseState: "",
+      },
+
+      rules: {
+        required: [(val) => val.length > 0 || "Required"],
+        licenseNumber: [(val)=> val.length === 8 || "license number must be length of 8"],
+        licenseState: [(val) => /(NY|IN)/.test(val) || "Sorry only IN or NY available for now."]
+      },
+      dialogHeader: "<no dialogHeader>",
+      dialogText: "<no dialogText>",
+      dialogVisible: false,
     };
+    
   },
 
   computed: {
@@ -27,16 +85,56 @@ export default {
 
   mounted: function() {
     this.$axios.get(`/drivers/${this.$store.state.currentAccount.id}`).then(response => {
-        if (response.data.ok) {
-            //isDriver = true;
-            return;
-        }
-    })
+      this.drivers = response.data.map(driver => ({
+        userId: driver.userId,
+        licenseNumber: driver.licenseNumber,
+        licenseState: driver.licenseState
+      }));
+    });
   },
   methods: {
     signOut() {
       this.$store.commit("logOut");
       if (this.$router.currentRoute.name != "home-page") {
+        this.$router.push({ name: "home-page" });
+      }
+    },
+    handleSubmit: function () {
+      // Haven't been successful yet.
+      this.driverCreated = false;
+
+      // Post the content of the form to the Hapi server.
+      this.$axios
+        .post("/driver", {
+          userId: this.$store.state.currentAccount.id,
+          licenseNumber: this.newDriver.licenseNumber,
+          licenseState: this.newDriver.licenseState,
+        })
+        .then((result) => {
+          // Based on whether things worked or not, show the
+          // appropriate dialog.
+          if (result.data.ok) {
+            this.showDialog("Success", result.data.msge);
+            this.accountCreated = true;
+          } else {
+            this.showDialog("Sorry", result.data.msge);
+          }
+        })
+        .catch((err) => this.showDialog("Failed", err));
+    },
+    // Helper method to display the dialog box with the appropriate content.
+    showDialog: function (header, text) {
+      this.dialogHeader = header;
+      this.dialogText = text;
+      this.dialogVisible = true;
+    },
+
+    // Invoked by the "Okay" button on the dialog; dismiss the dialog
+    // and navigate to the home page.
+    hideDialog: function () {
+      this.dialogVisible = false;
+      if (this.accountCreated) {
+        // Only navigate away from the sign-up page if we were successful.
         this.$router.push({ name: "home-page" });
       }
     }

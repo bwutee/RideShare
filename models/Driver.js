@@ -10,7 +10,7 @@ class Driver extends Model {
         const ride = require("./Ride");
         const state = require("./State")
         return {
-            users: {
+            accounts: {
                 relation: Model.BelongsToOneRelation,
                 modelClass: user,
                 join: {

@@ -104,36 +104,18 @@ async function init() {
         validate: {
           payload: Joi.object({
             licenseNumber: Joi.string().required(),
-            licenseState: Joi.string().required(),
-            email: Joi.string().email().required(),
-            password: Joi.string().required(),
+            licenseState: Joi.string().required()
           }),
         },
       },
       handler: async (request, h) => {
-        const existingAccount = await Account.query()
-          .where("email", request.payload.email)
-          .first();
-        
-          if (!existingAccount) {
-          return {
-            ok: false,
-            msge: `Account with email '${request.payload.email}' does not exist`,
-          };
-        }
 
-        const accountId = await Account.query()
-          .where("email", request.payload.email)
-          .select("id");
-        if(accountId){
-          const newDriver = await accountId.$relatedQuery().insert({
-            userId: accountId,
-            licenseNumber: request.payload.licenseNumber,
-            licenseState: request.payload.licenseState,
-          });
-        }
-
-        if (newDriver) {
+        const postDriver = await Driver.query().insert({
+          userId: newDriver.userId,
+          licenseNumber: newDriver.licenseNumber,
+          licenseState: newDriver.licenseState
+        })
+        if (postDriver) {
           return {
             ok: true,
             msge: `Congratulation! You are now a driver`,
@@ -141,7 +123,7 @@ async function init() {
         } else {
           return {
             ok: false,
-            msge: `Couldn't assign to a driver with email '${request.payload.email}'`,
+            msge: `Couldn't assign to a driver`,
           };
         }
       },
@@ -224,18 +206,35 @@ async function init() {
       config: {
         description: "Retrieve specific driver by Id",
       },
-      handler: (request, h) => {
-        const driver = Driver.query().where("userId",request.params.id);
-        if(!driver){
+      handler: async (request, h) => {
+        return await Driver.query().where("userId",request.params.id);
+        /*
+        if(!driver.where("userId",request.params.id)){
           return {
             ok: false,
             msge: "driver not found"
           }
-        }else{
-          return driver;
-        }
+        }else if (driver.where("userId",request.params.id)){
+          return {
+            ok: true
+          }
+        } */ 
       }
     },
+    
+
+    {
+      method: "GET",
+      path: "/rides/{from}/to/{to}",
+      config: {
+        description: "Retrieve specific ride",
+      },
+      handler: async (request, h) => {
+        return await Ride.query()
+        .where("fromLocationId",request.params.from)
+        .where("toLocationId",request.params.to)
+      }
+    },    
     {
       method: "GET",
       path: "/accounts",
@@ -320,6 +319,32 @@ async function init() {
           };
         }
       },
+    },
+
+    
+    {
+      method: "POST",
+      path: "/join-ride",
+      config: {
+        description: "Join a ride",
+      },
+      handler: async (request, h) => {
+        const joinRide =  await Passenger.query().insert({
+          userId: request.payload.userId,
+          rideId: request.payload.rideId
+        });
+        if (joinRide) {
+          return {
+            ok: true,
+            msge: `successfully joined a ride`,
+          };
+        } else {
+          return {
+            ok: false,
+            msge: `ride join failed`,
+          };
+        }
+      }
     },
   ]);
 

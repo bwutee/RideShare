@@ -2,7 +2,6 @@
   <v-container>
     <div>
       <h4 class="display-1">Accounts</h4>
-
       <v-data-table
         class="elevation-1"
         v-bind:headers="headers"
