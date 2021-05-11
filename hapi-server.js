@@ -100,20 +100,14 @@ async function init() {
       method: "POST",
       path: "/driver",
       config: {
-        description: "Sign up for a driver",
-        validate: {
-          payload: Joi.object({
-            licenseNumber: Joi.string().required(),
-            licenseState: Joi.string().required()
-          }),
-        },
+        description: "Sign up for a driver",  
       },
       handler: async (request, h) => {
 
         const postDriver = await Driver.query().insert({
-          userId: newDriver.userId,
-          licenseNumber: newDriver.licenseNumber,
-          licenseState: newDriver.licenseState
+          userId: request.payload.userId,
+          licenseNumber: request.payload.licenseNumber,
+          licenseState: request.payload.licenseState
         })
         if (postDriver) {
           return {
@@ -329,10 +323,15 @@ async function init() {
         description: "Join a ride",
       },
       handler: async (request, h) => {
-        const joinRide =  await Passenger.query().insert({
+        const joinRide =  await Account.relatedQuery('ride')
+        .for(request.payload.userId)
+        .relate(request.payload.rideId)
+        /*
+        .insert({
           userId: request.payload.userId,
           rideId: request.payload.rideId
-        });
+        });*/
+
         if (joinRide) {
           return {
             ok: true,
