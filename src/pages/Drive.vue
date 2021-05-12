@@ -5,13 +5,19 @@
     </div>
     <div v-if="isLoggedIn">
       <h2>Drive Anywhere</h2>
-      <!--<p> {{this.$store.state.currentAccount}}</p>-->
+      <p> [Current accout]<br> 
+        id: {{this.$store.state.currentAccount.id}}<br>
+        Name: {{this.$store.state.currentAccount.lastName}} {{this.$store.state.currentAccount.firstName}}<br>
+        email: {{this.$store.state.currentAccount.email}}<br><br>
+      </p>
+
       <div v-if="drivers.length > 0">
-        Hi, Driver!
+        Hi, {{this.$store.state.currentAccount.lastName}}!
         <p>
-          ID: {{ drivers[0].userId }} /License Number :
-          {{ drivers[0].licenseNumber }} /License State :
-          {{ drivers[0].licenseState }}
+          user id : {{drivers[0].userId}} <br>
+          ID: {{ drivers[0].userId }} <br>
+          License Number : {{ drivers[0].licenseNumber }} <br>
+          License State : {{ drivers[0].licenseState }}
         </p>
         <v-form>
           From: {{ fromLocation }}
@@ -31,11 +37,12 @@
           >
           </v-select>
 
-          <v-btn depressed color="primary" v-on:click="handleSubmit">
+          <v-btn depressed color="primary" v-on:click="handleSearch">
             Search
           </v-btn>
+          
         </v-form>
-        selected: {{ selectRide }}
+        selected: {{selectRide}}
         <v-data-table
           v-model="selectRide"
           :headers="headers"
@@ -46,7 +53,8 @@
           class="elevation-1"
         >
         </v-data-table>
-        <v-btn v-on:click="joinRide"> Join </v-btn>
+        
+        <v-btn v-on:click="driveRide"> Drive </v-btn>
         <v-snackbar v-model="snackbar.show">
           {{ snackbar.msge }}
           <v-btn text color="primary" @click="snackbar.show = false"
@@ -72,7 +80,7 @@
             >Sign Up
           </v-btn>
         </v-form>
-
+        
         <div class="text-xs-center">
           <v-dialog v-model="dialogVisible" width="500">
             <v-card>
@@ -93,6 +101,7 @@
             </v-card>
           </v-dialog>
         </div>
+        
       </div>
     </div>
   </v-container>
@@ -102,6 +111,22 @@
 export default {
   data: function () {
     return {
+      selectRide : null,
+      fromLocation: "",
+      toLocation: "",
+      locations: { name: "item name", address: "item address" },
+      headers: [
+        { text: "id", value: "id"},
+        { text: "Date", value: "date" },
+        { text: "Time", value: "time" },
+        { text: "fee", value: "fee"},
+        { text: "vehicle id", value: "vehicleId"}
+      ],
+      searchRides: [],
+      snackbar: {
+        show: false,
+        msge: "",
+      },
       drivers: [],
       valid: false,
 
@@ -137,13 +162,35 @@ export default {
       .get(`/drivers/${this.$store.state.currentAccount.id}`)
       .then((response) => {
         this.drivers = response.data.map((driver) => ({
+          id: driver.id,
           userId: driver.userId,
           licenseNumber: driver.licenseNumber,
           licenseState: driver.licenseState,
         }));
       });
+    this.$axios.get("/locations").then((response) => {
+      this.locations = response.data.map((location) => ({
+        value: location.id,
+        text: `${location.name}, ${location.address}`
+      }));
+    });
   },
   methods: {
+    handleSearch: function () {
+      // Post the content of the form to the Hapi server.
+      this.$axios
+        .get(`/rides/${this.fromLocation}/to/${this.toLocation}`)
+        .then((result) => {
+          this.searchRides = result.data.map(ride => ({
+          id: ride.id,
+          date: ride.date,
+          time: ride.time,
+          fee: ride.fee,
+          vehicleId: ride.vehicleId
+        }));
+      })
+        .catch((err) => this.showDialog("Failed", err));
+    },
     signOut() {
       this.$store.commit("logOut");
       if (this.$router.currentRoute.name != "home-page") {
@@ -166,7 +213,7 @@ export default {
           // appropriate dialog.
           if (result.data.ok) {
             this.showDialog("Success", result.data.msge);
-            this.accountCreated = true;
+            this.driverCreated = true;
           } else {
             this.showDialog("Sorry", result.data.msge);
           }
@@ -189,6 +236,24 @@ export default {
         this.$router.push({ name: "home-page" });
       }
     },
+    driveRide: function () {
+      this.$axios
+        .post("/drive-ride",{
+          driverId:  this.drivers[0].id,
+          rideId: this.selectRide[0].id
+        }).then((result) => {
+          this.showSnackbar(result.data.msge);
+          if (result.data.ok) {
+            this.showDialog("Success", result.data.msge);
+            this.accountCreated = true;
+          }
+        })
+        .catch((err) => this.showSnackbar(err));
+    },
+    showSnackbar(msge) {
+      this.snackbar.msge = msge;
+      this.snackbar.show = true;
+    }
   },
 };
 </script>

@@ -345,6 +345,37 @@ async function init() {
         }
       }
     },
+
+    {
+      method: "POST",
+      path: "/drive-ride",
+      config: {
+        description: "Drive a ride",
+      },
+      handler: async (request, h) => {
+        const driveRide =  await Driver.relatedQuery('rides')
+        .for(request.payload.driverId)
+        .relate(request.payload.rideId)
+        /*
+        .insert({
+          userId: request.payload.userId,
+          rideId: request.payload.rideId
+        });*/
+
+        if (driveRide) {
+          return {
+            ok: true,
+            msge: `successfully assigned as driver`,
+          };
+        } else {
+          return {
+            ok: driveRide,
+            msge: `ride join failed`,
+          };
+        }
+      }
+    }
+
   ]);
 
   // Start the server.

@@ -107,6 +107,13 @@ export default {
         })
         .catch((err) => this.showDialog("Failed", err));
     },
+        // Helper method to display the dialog box with the appropriate content.
+    showDialog: function (header, text) {
+      this.dialogHeader = header;
+      this.dialogText = text;
+      this.dialogVisible = true;
+    },
+    
     joinRide: function () {
       this.$axios
         .post("/join-ride",{
@@ -115,8 +122,8 @@ export default {
         }).then((result) => {
           this.showSnackbar(result.data.msge);
           if (result.data.ok) {
-            this.$store.commit("logIn", result.data.details);
-            this.$router.push({ name: "home-page" });
+            this.showDialog("Success", result.data.msge);
+            this.accountCreated = true;
           }
         })
         .catch((err) => this.showSnackbar(err));

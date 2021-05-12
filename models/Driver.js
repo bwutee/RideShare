@@ -38,7 +38,7 @@ class Driver extends Model {
                     from: "Driver.id",
                     through: {
                         from: "Drivers.driverId",
-                        to: "Drivers.rideID"
+                        to: "Drivers.rideId"
                     },
                     to: "Ride.id"
                 }
